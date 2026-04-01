@@ -3,74 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roblox Rolimons Tracker - Bos Xinzi</title>
+    <title>Rolimons Scanner - Bos Xinzi</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-900 text-white font-sans min-h-screen flex items-center justify-center p-4">
     <div class="max-w-xl w-full bg-gray-800 p-8 rounded-2xl shadow-2xl border border-gray-700">
-        <h1 class="text-3xl font-bold text-center mb-2 text-blue-400">ROLIMONS TRACKER</h1>
-        <p class="text-center text-gray-400 mb-6 text-sm">Target: Bos Xinzi</p>
+        <h1 class="text-3xl font-bold text-center mb-2 text-blue-400 italic">ROLIMONS SCANNER</h1>
+        <p class="text-center text-gray-400 mb-6 text-xs tracking-widest uppercase">Property of Bos Xinzi</p>
         
         <div class="mb-4">
-            <label class="block text-sm font-medium mb-2 text-gray-400">Enter Profile Link / User ID:</label>
-            <input type="text" id="userInput" class="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-sm focus:border-blue-500 outline-none text-gray-300" placeholder="e.g. https://www.roblox.com/users/123456/profile or 123456">
+            <label class="block text-sm font-medium mb-2 text-gray-400">User ID Only:</label>
+            <input type="number" id="userIdInput" class="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-lg focus:border-blue-500 outline-none text-white font-mono" placeholder="e.g. 116422565">
         </div>
 
-        <button onclick="trackUser()" id="trackBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all duration-200 uppercase tracking-widest">Fetch Data From Rolimons</button>
+        <button onclick="scanRolimons()" id="scanBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-lg transition-all duration-200 uppercase">FETCH PLAYER DATA</button>
 
-        <div id="loading" class="hidden mt-4 text-center text-gray-400 animate-pulse">Menarik data dari Rolimons/Roblox API...</div>
+        <div id="loading" class="hidden mt-4 text-center text-gray-400 animate-pulse">Accessing Rolimons Database...</div>
 
-        <div id="result" class="hidden mt-6 bg-gray-900 p-6 rounded-xl border border-gray-700 space-y-4">
-            <div class="flex justify-between border-b border-gray-700 pb-2">
-                <span class="text-gray-400">Username:</span>
-                <span id="resUser" class="font-bold text-blue-400">-</span>
+        <div id="result" class="hidden mt-6 bg-gray-900 p-6 rounded-xl border border-gray-700 space-y-4 font-mono">
+            <div class="flex justify-between border-b border-gray-800 pb-2">
+                <span class="text-gray-500">USERNAME:</span>
+                <span id="resUser" class="text-blue-400">-</span>
             </div>
-            <div class="flex justify-between border-b border-gray-700 pb-2">
-                <span class="text-gray-400">Total RAP (Value):</span>
-                <span id="resRAP" class="font-bold text-green-400">-</span>
+            <div class="flex justify-between border-b border-gray-800 pb-2">
+                <span class="text-gray-500">VALUE:</span>
+                <span id="resValue" class="text-green-400">-</span>
             </div>
-            <div class="flex justify-between border-b border-gray-700 pb-2">
-                <span class="text-gray-400">Rolimons Link:</span>
-                <a id="roliLink" href="#" target="_blank" class="text-blue-500 underline text-sm italic">Open in Rolimons</a>
+            <div class="flex justify-between border-b border-gray-800 pb-2">
+                <span class="text-gray-500">RAP:</span>
+                <span id="resRAP" class="text-yellow-400">-</span>
+            </div>
+            <div class="flex justify-between border-b border-gray-800 pb-2">
+                <span class="text-gray-500">RANK:</span>
+                <span id="resRank" class="text-purple-400">-</span>
+            </div>
+            <div class="text-center pt-2">
+                <a id="roliLink" href="#" target="_blank" class="text-xs text-gray-500 hover:text-white underline">VIEW FULL PROFILE ON ROLIMONS</a>
             </div>
         </div>
     </div>
 
     <script>
-        async function trackUser() {
-            const input = document.getElementById('userInput').value;
-            const btn = document.getElementById('trackBtn');
+        async function scanRolimons() {
+            const userId = document.getElementById('userIdInput').value;
+            const btn = document.getElementById('scanBtn');
             const resultDiv = document.getElementById('result');
             const loading = document.getElementById('loading');
 
-            if(!input) return alert('Input ID atau Link Profile dulu, Bos!');
-
-            let userId = input.match(/\d+/);
-            if(!userId) return alert('Format ID tidak valid!');
-            userId = userId[0];
+            if(!userId) return alert('Input User ID, Bos!');
 
             btn.disabled = true;
             loading.classList.remove('hidden');
             resultDiv.classList.add('hidden');
 
             try {
-                // Fetch public data via Roblox (username check)
-                const userRes = await fetch(`https://users.roblox.com/v1/users/${userId}`);
-                const userData = await userRes.json();
-                
-                // Fetch Inventory RAP (Limiteds Only) via Public API
-                const invRes = await fetch(`https://inventory.roblox.com/v1/users/${userId}/assets/collectibles?assetType=Hat&limit=100`);
-                const invData = await invRes.json();
-                
-                const totalRAP = (invData.data || []).reduce((sum, item) => sum + (item.recentAveragePrice || 0), 0);
+                // Gunakan CORS Proxy atau langsung jika API mendukung
+                // Untuk demo ini kita arahkan user ke link Rolimons jika fetch gagal karena CORS
+                // Sembari memberikan data manual dari link
+                const response = await fetch(`https://www.rolimons.com/playerapi/player/${userId}`);
+                const data = await response.json();
 
-                document.getElementById('resUser').innerText = userData.name || 'Unknown';
-                document.getElementById('resRAP').innerText = totalRAP.toLocaleString();
-                document.getElementById('roliLink').href = `https://www.rolimons.com/player/${userId}`;
-                
-                resultDiv.classList.remove('hidden');
+                if (data.success) {
+                    document.getElementById('resUser').innerText = data.name;
+                    document.getElementById('resValue').innerText = data.value.toLocaleString();
+                    document.getElementById('resRAP').innerText = data.rap.toLocaleString();
+                    document.getElementById('resRank').innerText = "#" + data.rank.toLocaleString();
+                    document.getElementById('roliLink').href = `https://www.rolimons.com/player/${userId}`;
+                    resultDiv.classList.remove('hidden');
+                } else {
+                    alert('User not found in Rolimons database.');
+                }
             } catch (err) {
-                alert('Gagal mengambil data. Pastikan Inventory user bersifat PUBLIK!');
+                // Fallback: Tampilkan link langsung jika API browser memblokir request
+                document.getElementById('resUser').innerText = "PROTECTED";
+                document.getElementById('resValue').innerText = "CLICK BELOW";
+                document.getElementById('resRAP').innerText = "TO VIEW";
+                document.getElementById('roliLink').href = `https://www.rolimons.com/player/${userId}`;
+                resultDiv.classList.remove('hidden');
+                alert('Browser memblokir akses langsung. Gunakan link di bawah untuk cek manual, Bos.');
             } finally {
                 btn.disabled = false;
                 loading.classList.add('hidden');
