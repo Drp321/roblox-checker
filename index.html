@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roblox Status Checker - Bos Xinzi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-xl w-full bg-gray-800 p-8 rounded-2xl shadow-2xl border border-gray-700">
+        <h1 class="text-3xl font-bold text-center mb-6 text-blue-400">ROBLOX CHECKER (BOS XINZI)</h1>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium mb-2 text-gray-400">Enter .ROBLOSECURITY Cookie:</label>
+            <textarea id="cookieInput" rows="4" class="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-sm focus:border-blue-500 outline-none text-gray-300" placeholder="Paste full cookie here..."></textarea>
+        </div>
+
+        <button onclick="checkAccount()" id="checkBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all duration-200">SCAN ACCOUNT STATUS</button>
+
+        <div id="loading" class="hidden mt-4 text-center text-gray-400 animate-pulse">Scanning server... Please wait...</div>
+
+        <div id="result" class="hidden mt-6 bg-gray-900 p-6 rounded-xl border border-gray-700 space-y-4">
+            <div class="flex justify-between border-b border-gray-700 pb-2">
+                <span class="text-gray-400">Username:</span>
+                <span id="resUser" class="font-bold text-blue-400">-</span>
+            </div>
+            <div class="flex justify-between border-b border-gray-700 pb-2">
+                <span class="text-gray-400">Status Account:</span>
+                <span id="resHealth" class="font-bold">-</span>
+            </div>
+            <div class="flex justify-between border-b border-gray-700 pb-2">
+                <span class="text-gray-400">Limited Items:</span>
+                <span id="resCount" class="font-bold text-yellow-400">-</span>
+            </div>
+            <div class="flex justify-between border-b border-gray-700 pb-2">
+                <span class="text-gray-400">Total RAP:</span>
+                <span id="resRAP" class="font-bold text-green-400">-</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function checkAccount() {
+            const cookie = document.getElementById('cookieInput').value;
+            const btn = document.getElementById('checkBtn');
+            const resultDiv = document.getElementById('result');
+            const loading = document.getElementById('loading');
+
+            if(!cookie) return alert('Input cookie please, Bos!');
+
+            btn.disabled = true;
+            loading.classList.remove('hidden');
+            resultDiv.classList.add('hidden');
+
+            try {
+                const response = await fetch('/check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cookie })
+                });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    document.getElementById('resUser').innerText = data.user;
+                    document.getElementById('resHealth').innerText = data.health;
+                    document.getElementById('resHealth').className = data.health.includes('SAFE') ? 'font-bold text-green-500' : 'font-bold text-red-500';
+                    document.getElementById('resCount').innerText = data.limitedCount;
+                    document.getElementById('resRAP').innerText = data.totalRAP.toLocaleString();
+                    resultDiv.classList.remove('hidden');
+                } else {
+                    alert('Error: ' + (data.error || 'Check failed.'));
+                }
+            } catch (err) {
+                alert('Connection error to master server.');
+            } finally {
+                btn.disabled = false;
+                loading.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
