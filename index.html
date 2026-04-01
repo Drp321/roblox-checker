@@ -3,21 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roblox Status Checker - Bos Xinzi</title>
+    <title>Roblox Rolimons Tracker - Bos Xinzi</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-900 text-white font-sans min-h-screen flex items-center justify-center p-4">
     <div class="max-w-xl w-full bg-gray-800 p-8 rounded-2xl shadow-2xl border border-gray-700">
-        <h1 class="text-3xl font-bold text-center mb-6 text-blue-400">ROBLOX CHECKER (BOS XINZI)</h1>
+        <h1 class="text-3xl font-bold text-center mb-2 text-blue-400">ROLIMONS TRACKER</h1>
+        <p class="text-center text-gray-400 mb-6 text-sm">Target: Bos Xinzi</p>
         
         <div class="mb-4">
-            <label class="block text-sm font-medium mb-2 text-gray-400">Enter .ROBLOSECURITY Cookie:</label>
-            <textarea id="cookieInput" rows="4" class="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-sm focus:border-blue-500 outline-none text-gray-300" placeholder="Paste full cookie here..."></textarea>
+            <label class="block text-sm font-medium mb-2 text-gray-400">Enter Profile Link / User ID:</label>
+            <input type="text" id="userInput" class="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-sm focus:border-blue-500 outline-none text-gray-300" placeholder="e.g. https://www.roblox.com/users/123456/profile or 123456">
         </div>
 
-        <button onclick="checkAccount()" id="checkBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all duration-200">SCAN ACCOUNT STATUS</button>
+        <button onclick="trackUser()" id="trackBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all duration-200 uppercase tracking-widest">Fetch Data From Rolimons</button>
 
-        <div id="loading" class="hidden mt-4 text-center text-gray-400 animate-pulse">Scanning server... Please wait...</div>
+        <div id="loading" class="hidden mt-4 text-center text-gray-400 animate-pulse">Menarik data dari Rolimons/Roblox API...</div>
 
         <div id="result" class="hidden mt-6 bg-gray-900 p-6 rounded-xl border border-gray-700 space-y-4">
             <div class="flex justify-between border-b border-gray-700 pb-2">
@@ -25,53 +26,51 @@
                 <span id="resUser" class="font-bold text-blue-400">-</span>
             </div>
             <div class="flex justify-between border-b border-gray-700 pb-2">
-                <span class="text-gray-400">Status Account:</span>
-                <span id="resHealth" class="font-bold">-</span>
-            </div>
-            <div class="flex justify-between border-b border-gray-700 pb-2">
-                <span class="text-gray-400">Limited Items:</span>
-                <span id="resCount" class="font-bold text-yellow-400">-</span>
-            </div>
-            <div class="flex justify-between border-b border-gray-700 pb-2">
-                <span class="text-gray-400">Total RAP:</span>
+                <span class="text-gray-400">Total RAP (Value):</span>
                 <span id="resRAP" class="font-bold text-green-400">-</span>
+            </div>
+            <div class="flex justify-between border-b border-gray-700 pb-2">
+                <span class="text-gray-400">Rolimons Link:</span>
+                <a id="roliLink" href="#" target="_blank" class="text-blue-500 underline text-sm italic">Open in Rolimons</a>
             </div>
         </div>
     </div>
 
     <script>
-        async function checkAccount() {
-            const cookie = document.getElementById('cookieInput').value;
-            const btn = document.getElementById('checkBtn');
+        async function trackUser() {
+            const input = document.getElementById('userInput').value;
+            const btn = document.getElementById('trackBtn');
             const resultDiv = document.getElementById('result');
             const loading = document.getElementById('loading');
 
-            if(!cookie) return alert('Input cookie please, Bos!');
+            if(!input) return alert('Input ID atau Link Profile dulu, Bos!');
+
+            let userId = input.match(/\d+/);
+            if(!userId) return alert('Format ID tidak valid!');
+            userId = userId[0];
 
             btn.disabled = true;
             loading.classList.remove('hidden');
             resultDiv.classList.add('hidden');
 
             try {
-                const response = await fetch('/check', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ cookie })
-                });
-                const data = await response.json();
+                // Fetch public data via Roblox (username check)
+                const userRes = await fetch(`https://users.roblox.com/v1/users/${userId}`);
+                const userData = await userRes.json();
+                
+                // Fetch Inventory RAP (Limiteds Only) via Public API
+                const invRes = await fetch(`https://inventory.roblox.com/v1/users/${userId}/assets/collectibles?assetType=Hat&limit=100`);
+                const invData = await invRes.json();
+                
+                const totalRAP = (invData.data || []).reduce((sum, item) => sum + (item.recentAveragePrice || 0), 0);
 
-                if (data.status === 'success') {
-                    document.getElementById('resUser').innerText = data.user;
-                    document.getElementById('resHealth').innerText = data.health;
-                    document.getElementById('resHealth').className = data.health.includes('SAFE') ? 'font-bold text-green-500' : 'font-bold text-red-500';
-                    document.getElementById('resCount').innerText = data.limitedCount;
-                    document.getElementById('resRAP').innerText = data.totalRAP.toLocaleString();
-                    resultDiv.classList.remove('hidden');
-                } else {
-                    alert('Error: ' + (data.error || 'Check failed.'));
-                }
+                document.getElementById('resUser').innerText = userData.name || 'Unknown';
+                document.getElementById('resRAP').innerText = totalRAP.toLocaleString();
+                document.getElementById('roliLink').href = `https://www.rolimons.com/player/${userId}`;
+                
+                resultDiv.classList.remove('hidden');
             } catch (err) {
-                alert('Connection error to master server.');
+                alert('Gagal mengambil data. Pastikan Inventory user bersifat PUBLIK!');
             } finally {
                 btn.disabled = false;
                 loading.classList.add('hidden');
